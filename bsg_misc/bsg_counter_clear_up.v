@@ -46,7 +46,7 @@ module bsg_counter_clear_up #(parameter `BSG_INV_PARAM(max_val_p)
 
    always_ff @ (negedge clk_i) 
      begin
-       if ((count_o==ptr_width_lp '(max_val_p)) && up_i && (reset_i===0) && !disable_overflow_warning_p)
+       if ((count_o==ptr_width_lp '(max_val_p)) && up_i && !clear_i && (reset_i===0) && !disable_overflow_warning_p)
          $display("%m error: counter overflow at time %t", $time);
      end
 
