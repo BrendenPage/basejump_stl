@@ -40,7 +40,7 @@ bsg_trace_replay
     // input channel
     ,.v_i       (1'b0)
     ,.data_i    (0)
-    ,.ready_o   (1'b1)
+    ,.ready_and_o   ()
 
     // output channel
     ,.v_o       (sti_v_lo)
@@ -75,7 +75,7 @@ bsg_trace_replay
     // input channel
     ,.v_i       (res_v_li       )
     ,.data_i    (res_data_li    )
-    ,.ready_o   (res_ready_lo   )
+    ,.ready_and_o   (res_ready_lo   )
 
     // output channel
     ,.v_o       ()
