@@ -117,7 +117,7 @@ module testbench ();
 
                                         ,.v_i(1'b0)
                                         ,.data_i('0)
-                                        ,.ready_o()
+                                        ,.ready_and_o()
 
                                         ,.v_o(tr_v_lo[dramsim_i][i])
                                         ,.data_o(tr_data_lo[dramsim_i][i])
