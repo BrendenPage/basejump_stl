@@ -86,7 +86,7 @@ module testbench ();
 
      ,.v_i(1'b0)
      ,.data_i('0)
-     ,.ready_o()
+     ,.ready_and_o()
 
      ,.v_o(trace_v_lo)
      ,.data_o(trace_lo)
