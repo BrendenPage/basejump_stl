@@ -37,7 +37,7 @@ module bsg_front_side_bus_hop_in
     , input reset_i
 
     // from previous hop
-    , output              ready_o
+    , output              ready_and_o
     , input                   v_i
     , input [width_p-1:0]  data_i
 
@@ -46,7 +46,7 @@ module bsg_front_side_bus_hop_in
 
     , output [fan_out_p-1:0]                   v_o
     , output [fan_out_p-1:0] [width_p-1:0]  data_o
-    , input  [fan_out_p-1:0]               ready_i
+    , input  [fan_out_p-1:0]               ready_and_i
     );
 
    logic [fan_out_p-1:0] sent_r, sent_n;
@@ -65,7 +65,7 @@ module bsg_front_side_bus_hop_in
       ,.data_o  (data_o_tmp)
       ,.v_o     (fifo_v)
       ,.yumi_i  (fifo_yumi)
-      ,.ready_o (ready_o)
+      ,.ready_o (ready_and_o)
       ,.v_i     (v_i)
       );
 
@@ -88,7 +88,7 @@ module bsg_front_side_bus_hop_in
              sent_n[i] = sent_r[i];
 
              // if we have data,
-             if (v_o_tmp[i] & ready_i[i])
+             if (v_o_tmp[i] & ready_and_i[i])
                sent_n[i] = 1'b1;
 
           end // always_comb

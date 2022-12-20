@@ -20,13 +20,13 @@ module bsg_front_side_bus_hop_out #(parameter `BSG_INV_PARAM(width_p))
 
    , input  [1:0]         v_i         // late
    , input  [1:0][width_p-1:0] data_i // late
-   , output               ready_o     // to prev switch; early
+   , output               ready_and_o // to prev switch; early
    , output               yumi_o      // to local node;  late
 
    // to next switch
    , output               v_o     // early
    , output [width_p-1:0] data_o
-   , input                ready_i // late
+   , input                ready_and_i // late
    );
 
    wire               fifo_v;
@@ -62,7 +62,7 @@ module bsg_front_side_bus_hop_out #(parameter `BSG_INV_PARAM(width_p))
       ,.data_i  (data_i[source_sel])
       ,.data_o  (data_o)
       ,.v_o     (fifo_v)
-      ,.yumi_i  (fifo_v & ready_i)
+      ,.yumi_i  (fifo_v & ready_and_i)
       ,.ready_o (fifo_ready)
       ,.v_i     (| v_i)
       );
@@ -73,7 +73,7 @@ module bsg_front_side_bus_hop_out #(parameter `BSG_INV_PARAM(width_p))
    // fifo space, and we are not creating a slot
    // for the local node
 
-   assign ready_o =  fifo_ready & ~v1_blocked_r;
+   assign ready_and_o =  fifo_ready & ~v1_blocked_r;
 
 
 

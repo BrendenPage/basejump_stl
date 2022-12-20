@@ -45,7 +45,7 @@ module bsg_fsb #(parameter `BSG_INV_PARAM( width_p )
     // to asm
     , output               asm_v_o
     , output [width_p-1:0] asm_data_o
-    , input                asm_ready_i
+    , input                asm_ready_and_i
 
     // into nodes
     , output [nodes_p-1:0] node_v_o
@@ -70,12 +70,12 @@ module bsg_fsb #(parameter `BSG_INV_PARAM( width_p )
    // index is node this channel goes out of
    wire [nodes_p-1:0] in_hop_v;
    wire [width_p-1:0] in_hop_data [nodes_p-1:0];
-   wire [nodes_p-1:0] in_hop_ready;
+   wire [nodes_p-1:0] in_hop_ready_and;
 
    // index is node this channel goes in to
    wire [nodes_p-1:0] out_hop_v;
    wire [width_p-1:0] out_hop_data [nodes_p-1:0];
-   wire [nodes_p-1:0] out_hop_ready;
+   wire [nodes_p-1:0] out_hop_ready_and;
 
 
 
@@ -87,26 +87,26 @@ module bsg_fsb #(parameter `BSG_INV_PARAM( width_p )
    assign asm_yumi_o = to_asm_ready & asm_v_i;
 
    // make sure packets fall off of the end.
-   assign in_hop_ready[nodes_p-1] = 1'b1;
+   assign in_hop_ready_and[nodes_p-1] = 1'b1;
 
    for (i = 0; i < nodes_p; i++)
      begin : fsb_node
-        wire node_ready_int, node_v_int, node_en_r_int;
+        wire node_yumi_int, node_v_int, node_en_r_int;
         wire [width_p-1:0] node_data_o_int;
 
         // m1 = minus 1
         wire [width_p-1:0] out_hop_data_m1;
-        wire               in_hop_ready_m1, out_hop_v_m1;
+        wire               in_hop_ready_and_m1, out_hop_v_m1;
 
         if (i == 0)
           begin
-             assign to_asm_ready = in_hop_ready_m1;
+             assign to_asm_ready = in_hop_ready_and_m1;
              assign asm_v_o      = out_hop_v_m1;
              assign asm_data_o   = out_hop_data_m1;
           end
         else
           begin
-             assign in_hop_ready[i-1] = in_hop_ready_m1;
+             assign in_hop_ready_and[i-1] = in_hop_ready_and_m1;
              assign out_hop_v[i-1]    = out_hop_v_m1;
              assign out_hop_data[i-1] = out_hop_data_m1;
           end
@@ -124,7 +124,7 @@ module bsg_fsb #(parameter `BSG_INV_PARAM( width_p )
              ,.reset_i(reset_i)
 
              // (i==0) ? 0:   avoid vcs complaint of negative index.
-             ,.ready_o(in_hop_ready_m1)
+             ,.ready_and_o(in_hop_ready_and_m1)
              ,.v_i    ((i==0) ? asm_v_i      : in_hop_v     [(i==0) ? i: i-1])
              ,.data_i ((i==0) ? asm_data_i   : in_hop_data  [(i==0) ? i: i-1])
 
@@ -132,7 +132,7 @@ module bsg_fsb #(parameter `BSG_INV_PARAM( width_p )
              ,.data_o ({node_data_o_int , in_hop_data [i]}) // 1=local node, 0 is next node
              // note: the node does valid->ready
              // but should be located nearby so it's okay
-             ,.ready_i({node_ready_int, in_hop_ready[i]})
+             ,.ready_and_i({node_yumi_int, in_hop_ready_and[i]})
              );
 
         // create a chain of hops going out to assembler
@@ -143,13 +143,13 @@ module bsg_fsb #(parameter `BSG_INV_PARAM( width_p )
            // we can't transmit data unless the node is enabled
            ,.v_i    ({node_en_r_int & node_v_i    [i], out_hop_v   [i]})
            ,.data_i ({node_data_i [i], out_hop_data[i]})
-           ,.ready_o(out_hop_ready[i])
+           ,.ready_and_o(out_hop_ready_and[i])
            ,.yumi_o (node_yumi_o  [i])
 
            // (i==0) ? 0:   avoid vcs complaint of negative index.
            ,.v_o    (out_hop_v_m1)
            ,.data_o (out_hop_data_m1)
-           ,.ready_i((i==0) ? asm_ready_i : out_hop_ready[(i==0) ? 0:i-1])
+           ,.ready_and_i((i==0) ? asm_ready_and_i : out_hop_ready_and[(i==0) ? 0:i-1])
            );
 
         bsg_fsb_murn_gateway #(.width_p(width_p)
@@ -165,7 +165,7 @@ module bsg_fsb #(parameter `BSG_INV_PARAM( width_p )
            // from gateway
            ,.v_i           (node_v_int)
            ,.data_i        (node_data_o_int)
-           ,.ready_o       (node_ready_int)
+           ,.yumi_o       (node_yumi_int)
 
            // to node
            // updated valid bit based on enable

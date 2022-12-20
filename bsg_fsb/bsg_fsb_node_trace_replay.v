@@ -26,7 +26,7 @@ module bsg_fsb_node_trace_replay
     // input channel
     , input v_i
     , input [ring_width_p-1:0] data_i
-    , output logic ready_o
+    , output logic ready_and_o
 
     // output channel
     , output logic v_o
@@ -111,14 +111,14 @@ module bsg_fsb_node_trace_replay
      begin
         // defaults; not sending and not receiving unless done
         v_o             = 1'b0;
-        ready_o         = done_r;
+        ready_and_o         = done_r;
         done_n          = done_r;
 
         if (!done_r & en_i & ~reset_i)
           begin
              case (op)
                eSend:    v_o     = 1'b1;
-               eReceive: ready_o = 1'b1;
+               eReceive: ready_and_o = 1'b1;
                eDone:    done_n  = 1'b1;
                default:
                  begin

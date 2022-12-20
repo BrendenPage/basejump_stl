@@ -33,7 +33,7 @@ module bsg_fsb_murn_gateway
     , input  reset_i
     , input  v_i
     , input  [width_p-1:0] data_i
-    , output ready_o // note this inspects v_i, so technically is v_i->ready_o
+    , output yumi_o  // note this inspects v_i, so technically is v_i->yumi_o
                      // but the underlying bsg_test_node is true v_i / ready_o
 
     // from node
@@ -51,7 +51,7 @@ module bsg_fsb_murn_gateway
    if (snoop_p & enabled_at_start_p)
      begin
         assign v_o            = v_i;
-        assign ready_o        = ready_i;
+        assign yumi_o         = ready_i;
         assign node_reset_r_o = reset_i;
         assign node_en_r_o    = 1'b1;
 
@@ -84,7 +84,7 @@ module bsg_fsb_murn_gateway
         //  - if the message is valid and node is actually ready for the packet
         //  - or if the message is not for us
 
-        assign  ready_o       = v_i   // guard against X propagation
+        assign  yumi_o        = v_i   // guard against X propagation
                                 & (~node_en_r        // node is sleeping
                                    | ready_i         // node actually is ready
                                    | for_switch      // message is for a switch

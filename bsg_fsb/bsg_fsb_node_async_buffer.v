@@ -27,7 +27,7 @@ module  bsg_fsb_node_async_buffer
    // input channel
    , output L_v_o
    , output [ring_width_p-1:0] L_data_o
-   , input  L_ready_i
+   , input  L_ready_and_i
 
    // output channel
    , input  L_v_i
@@ -75,7 +75,7 @@ module  bsg_fsb_node_async_buffer
     // not legal to r_deq_i if r_valid_o is not high.
     ,.r_clk_i   ( L_clk_i      )
     ,.r_reset_i ( L_reset_i    )
-    ,.r_deq_i   ( L_v_o & L_ready_i  )
+    ,.r_deq_i   ( L_v_o & L_ready_and_i  )
     ,.r_data_o  ( L_data_o     )
     ,.r_valid_o ( L_v_o )
     );
