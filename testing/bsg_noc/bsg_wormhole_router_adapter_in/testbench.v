@@ -123,7 +123,7 @@ module testbench();
 
     ,.v_i(fifo_v_lo)
     ,.data_i({{(max_packet_width_lp-flit_width_lp){1'b0}}, fifo_data_lo})
-    ,.ready_o(tr_ready_lo)
+    ,.ready_and_o(tr_ready_lo)
   
     ,.v_o(v_li)
     ,.data_o(data_li)
