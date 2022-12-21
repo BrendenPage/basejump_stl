@@ -52,7 +52,7 @@ module bsg_tag_trace_replay
       
     , input                            valid_i
     , input  [max_payload_width_p-1:0] data_i
-    , output                           ready_o
+    , output                           ready_and_o
 
     , output                                 valid_o
     , output [`BSG_MAX(1,num_masters_p)-1:0] en_r_o
@@ -94,7 +94,7 @@ module bsg_tag_trace_replay
         /* input channel */
         ,.v_i     (valid_i)
         ,.data_i  (trace_ring_width_lp ' (data_i))
-        ,.ready_o (ready_o)
+        ,.ready_and_o (ready_and_o)
 
         /* output channel */
         ,.v_o    (tr_valid_lo)
@@ -118,8 +118,8 @@ module bsg_tag_trace_replay
     wire [max_payload_width_p-1:0]       payload_n = tr_data_lo[0+:max_payload_width_p];
     wire [trace_ring_width_lp + 2 - 1:0] data_n    = {1'b0, payload_n, header_n, 1'b1};
 
-   wire 				 piso_ready_lo;
-   assign tr_yumi_li = piso_ready_lo & tr_valid_lo;
+   wire 				 piso_ready_and_lo;
+   assign tr_yumi_li = piso_ready_and_lo & tr_valid_lo;
    
     // Instantiate the paralle-in serial-out data structure.
     bsg_parallel_in_serial_out #( .width_p(1)
@@ -131,7 +131,7 @@ module bsg_tag_trace_replay
         /* Data Input Channel (Valid then Yumi) */
         ,.valid_i (tr_valid_lo)
         ,.data_i  (data_n)
-        ,.ready_and_o (piso_ready_lo)
+        ,.ready_and_o (piso_ready_and_lo)
    
         /* Data Output Channel (Valid then Yumi) */
         ,.valid_o (valid_o)
@@ -151,7 +151,7 @@ module bsg_tag_trace_replay
       bsg_dff_en #( .width_p(num_masters_p) )
         en_reg
           (.clk_i  (clk_i)
-          ,.en_i   (tr_valid_lo & piso_ready_lo)
+          ,.en_i   (tr_valid_lo & piso_ready_and_lo)
           ,.data_i (tr_data_lo[(max_payload_width_p+bsg_tag_header_width_lp)+:num_masters_p])
           ,.data_o (en_r_o)
           );
