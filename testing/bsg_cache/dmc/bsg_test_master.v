@@ -64,7 +64,7 @@ module bsg_test_master
 
       ,.v_i(tr_v_li[i])
       ,.data_i(tr_data_li[i])
-      ,.ready_o(tr_ready_lo[i])
+      ,.ready_and_o(tr_ready_lo[i])
 
       ,.v_o(tr_v_lo[i])
       ,.data_o(tr_data_lo[i])
