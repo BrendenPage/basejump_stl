@@ -46,7 +46,7 @@ module testbench();
   logic [ring_width_p+4-1:0] trace_rom_data;
 
   logic [ring_width_p-1:0] tr_data_li, tr_data_lo;
-  logic tr_v_li, tr_ready_lo;
+  logic tr_v_li, tr_ready_and_lo;
   logic tr_v_lo, tr_yumi_li;
   logic done;
 
@@ -60,7 +60,7 @@ module testbench();
 
     ,.v_i(tr_v_li)
     ,.data_i(tr_data_li)
-    ,.ready_o(tr_ready_lo)
+    ,.ready_and_o(tr_ready_and_lo)
 
     ,.v_o(tr_v_lo)
     ,.data_o(tr_data_lo)
@@ -105,7 +105,7 @@ module testbench();
 
   assign tr_v_li           = dma_data_v_li;
   assign tr_data_li        = dma_data_li;
-  assign dma_data_ready_lo = tr_ready_lo;
+  assign dma_data_ready_lo = tr_ready_and_lo;
 
   logic [6-1:0] axi_awid;
   logic [addr_width_p-1:0] axi_awaddr;
