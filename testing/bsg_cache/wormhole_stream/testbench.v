@@ -36,11 +36,10 @@ module testbench();
   localparam block_size_in_words_p = 8;
   localparam sets_p = 128;
   localparam ways_p = 8;
-  localparam word_tracking_p = 1;
   localparam mem_size_p = block_size_in_words_p*sets_p*ways_p*4;
   localparam block_offset_width_p = `BSG_SAFE_CLOG2(data_width_p*block_size_in_words_p/8);
   localparam data_len_p=block_size_in_words_p*data_width_p/dma_data_width_p;
-  localparam wh_len_width_p=`BSG_WIDTH(data_len_p+2);
+  localparam wh_len_width_p=`BSG_WIDTH(data_len_p+1);
   localparam wh_cid_width_p=3;
   localparam wh_cord_width_p=3;
   localparam wh_flit_width_p=dma_data_width_p;
@@ -59,7 +58,7 @@ module testbench();
 
 
   `declare_bsg_cache_pkt_s(addr_width_p,data_width_p);
-  `declare_bsg_cache_dma_pkt_s(addr_width_p,block_size_in_words_p);
+  `declare_bsg_cache_dma_pkt_s(addr_width_p, block_size_in_words_p);
 
   bsg_cache_pkt_s [num_dma_p-1:0] cache_pkt;
   logic [num_dma_p-1:0] v_li;
@@ -94,7 +93,7 @@ module testbench();
         ,.block_size_in_words_p(block_size_in_words_p)
         ,.sets_p(sets_p)
         ,.ways_p(ways_p)
-        ,.word_tracking_p(word_tracking_p)
+        ,.word_tracking_p(0)
         ,.amo_support_p(amo_support_level_arithmetic_lp)
       ) cache (
         .clk_i(clk)
@@ -192,18 +191,18 @@ module testbench();
   bsg_cache_wh_header_flit_s header_flit;
   assign header_flit = wh_link_concentrated_lo.data;
 
-  bsg_cache_dma_pkt_s [num_dma_p-1:0] mem_dma_pkt;
-  logic [num_dma_p-1:0] mem_dma_pkt_v_lo, mem_dma_pkt_yumi_li;
-  logic [num_dma_p-1:0][wh_flit_width_p-1:0] mem_dma_data_li;
-  logic [num_dma_p-1:0] mem_dma_data_v_li, mem_dma_data_ready_and_lo;
-  logic [num_dma_p-1:0][dma_data_width_p-1:0] mem_dma_data_lo;
-  logic [num_dma_p-1:0] mem_dma_data_v_lo, mem_dma_data_yumi_li;
+  bsg_cache_dma_pkt_s mem_dma_pkt;
+  logic mem_dma_pkt_v_lo, mem_dma_pkt_yumi_li;
+  logic [wh_flit_width_p-1:0] mem_dma_data_li;
+  logic mem_dma_data_v_li, mem_dma_data_ready_and_lo;
+  logic [dma_data_width_p-1:0] mem_dma_data_lo;
+  logic mem_dma_data_v_lo, mem_dma_data_yumi_li;
 
   logic [wh_cord_width_p-1:0] wh_header_cord_lo;
   logic [wh_cid_width_p-1:0] wh_header_cid_lo;
   wire [lg_num_dma_lp-1:0] wh_dma_id_li = header_flit.src_cid[0+:lg_num_dma_lp];
 
-  bsg_wormhole_to_cache_dma_fanout #(
+  bsg_wormhole_to_cache_dma_inorder #(
      .num_dma_p(num_dma_p)
      ,.dma_addr_width_p(addr_width_p)
      ,.dma_burst_len_p(data_len_p)
@@ -223,6 +222,7 @@ module testbench();
      ,.dma_pkt_o(mem_dma_pkt)
      ,.dma_pkt_v_o(mem_dma_pkt_v_lo)
      ,.dma_pkt_yumi_i(mem_dma_pkt_yumi_li)
+     ,.dma_pkt_id_o()
 
      ,.dma_data_i(mem_dma_data_li)
      ,.dma_data_v_i(mem_dma_data_v_li)
@@ -233,39 +233,35 @@ module testbench();
      ,.dma_data_yumi_i(mem_dma_data_yumi_li)
   );
 
+  // DMA model
+  bsg_nonsynth_dma_model #(
+    .addr_width_p(addr_width_p)
+    ,.data_width_p(dma_data_width_p)
+    ,.block_size_in_words_p(data_len_p)
+    ,.mask_width_p(block_size_in_words_p)
+    ,.els_p(mem_size_p)
 
-  for (genvar i = 0; i < num_dma_p; i++)
-    begin : dma
-      // DMA model
-      bsg_nonsynth_dma_model #(
-        .addr_width_p(addr_width_p)
-        ,.data_width_p(dma_data_width_p)
-        ,.mask_width_p(block_size_in_words_p)
-        ,.block_size_in_words_p(data_len_p)
-        ,.els_p(mem_size_p)
+    ,.read_delay_p(`DMA_READ_DELAY_P)
+    ,.write_delay_p(`DMA_WRITE_DELAY_P)
+    ,.dma_req_delay_p(`DMA_REQ_DELAY_P)
+    ,.dma_data_delay_p(`DMA_DATA_DELAY_P)
 
-        ,.read_delay_p(`DMA_READ_DELAY_P)
-        ,.write_delay_p(`DMA_WRITE_DELAY_P)
-        ,.dma_req_delay_p(`DMA_REQ_DELAY_P)
-        ,.dma_data_delay_p(`DMA_DATA_DELAY_P)
+  ) dma0 (
+    .clk_i(clk)
+    ,.reset_i(reset)
 
-      ) dma0 (
-        .clk_i(clk)
-        ,.reset_i(reset)
+    ,.dma_pkt_i(mem_dma_pkt)
+    ,.dma_pkt_v_i(mem_dma_pkt_v_lo)
+    ,.dma_pkt_yumi_o(mem_dma_pkt_yumi_li)
 
-        ,.dma_pkt_i(mem_dma_pkt[i])
-        ,.dma_pkt_v_i(mem_dma_pkt_v_lo[i])
-        ,.dma_pkt_yumi_o(mem_dma_pkt_yumi_li[i])
+    ,.dma_data_o(mem_dma_data_li)
+    ,.dma_data_v_o(mem_dma_data_v_li)
+    ,.dma_data_ready_i(mem_dma_data_ready_and_lo)
 
-        ,.dma_data_o(mem_dma_data_li[i])
-        ,.dma_data_v_o(mem_dma_data_v_li[i])
-        ,.dma_data_ready_i(mem_dma_data_ready_and_lo[i])
-
-        ,.dma_data_i(mem_dma_data_lo[i])
-        ,.dma_data_v_i(mem_dma_data_v_lo[i])
-        ,.dma_data_yumi_o(mem_dma_data_yumi_li[i])
-      );
-    end
+    ,.dma_data_i(mem_dma_data_lo)
+    ,.dma_data_v_i(mem_dma_data_v_lo)
+    ,.dma_data_yumi_o(mem_dma_data_yumi_li)
+  );
 
   // trace replay
   localparam rom_addr_width_lp = 26;
@@ -289,7 +285,7 @@ module testbench();
 
     ,.v_i(1'b0)
     ,.data_i('0)
-    ,.ready_and_o()
+    ,.ready_o()
 
     ,.v_o(tr_v_lo)
     ,.data_o(tr_data_lo)
